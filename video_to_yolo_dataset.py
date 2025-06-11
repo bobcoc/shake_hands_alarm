@@ -33,7 +33,7 @@ class VideoToYOLODataset:
         # 只检测人类 (class 0 in COCO dataset)
         self.person_class_id = 0
         
-    def extract_frames_and_detect(self, interval_ms=200, confidence_threshold=0.5):
+    def extract_frames_and_detect(self, interval_ms=300, confidence_threshold=0.5):
         """
         从视频中提取帧并进行人物检测
         
@@ -60,9 +60,9 @@ class VideoToYOLODataset:
         
         # 计算左下角区域
         crop_width = width // 2
-        crop_height = height // 2
-        crop_x = 0  # 左边
-        crop_y = height // 2  # 下半部分
+        crop_height = height // 2+1400
+        crop_x = 1000  # 左边
+        crop_y = height // 2-600  # 下半部分
         
         print(f"裁剪区域: ({crop_x}, {crop_y}) -> ({crop_x + crop_width}, {crop_y + crop_height})")
         
@@ -78,6 +78,16 @@ class VideoToYOLODataset:
             if frame_count % frame_interval == 0:
                 # 裁剪左下角四分之一
                 cropped_frame = frame[crop_y:crop_y + crop_height, crop_x:crop_x + crop_width]
+                
+                # 将图像缩小到原来的1/4
+                original_height, original_width = cropped_frame.shape[:2]
+                new_width = original_width // 4
+                new_height = original_height // 4
+                cropped_frame = cv2.resize(cropped_frame, (new_width, new_height))
+                
+                # 输出缩放信息（仅第一次）
+                if saved_count == 0:
+                    print(f"图像缩放: {original_width}x{original_height} -> {new_width}x{new_height}")
                 
                 # 保存图像
                 image_filename = f"frame_{saved_count:06d}.jpg"
